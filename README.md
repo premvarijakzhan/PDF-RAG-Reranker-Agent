@@ -32,7 +32,7 @@ An agentic Retrieval-Augmented Generation (RAG) pipeline with parallel retrieval
 ## Project Structure
 
 ```text
-agentic-rag/
+PDF-RAG-Reranker-Agent/
 ├── agentic_rag.py        # Core agentic RAG implementation
 ├── streamlit_app.py      # Streamlit interface for PDF ingestion and QA
 ├── multi/                # Advanced async CLI and multi-agent app
