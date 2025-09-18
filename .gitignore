@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.DS_Store
+.env
+/doc
+/input
+multi/agentic-rag-app.py
+/Video
+temp.pdf
+agentic-rag.code-workspace
+.python-version
+uv.lock
