@@ -16,7 +16,9 @@ An agentic Retrieval-Augmented Generation (RAG) pipeline with parallel retrieval
   - [Usage](#usage)
     - [Python Module](#python-module)
     - [Streamlit App](#streamlit-app)
+    - [FastAPI Backend \& Terminal Client](#fastapi-backend--terminal-client)
     - [CLI \& Async App](#cli--async-app)
+  - [API Endpoints](#api-endpoints)
   - [Extending \& Customizing](#extending--customizing)
   - [Documentation](#documentation)
   - [License](#license)
@@ -26,7 +28,7 @@ An agentic Retrieval-Augmented Generation (RAG) pipeline with parallel retrieval
 - **Agentic Design**: Modular agents for PDF loading, embedding, retrieval, question answering, and reranking coordinated by a central orchestrator.
 - **Parallel Retrieval & QA**: Generate diverse context sets via perturbed embeddings, then answer in parallel for efficiency.
 - **LLM-based Reranking**: A final RankingAgent selects the best answer with rationale, improving accuracy and transparency.
-- **Multiple Interfaces**: Use as a Python module, a Streamlit web app, or an async CLI application.
+- **Multiple Interfaces**: Use as a Python module, a Streamlit web app, a FastAPI backend with terminal client, or an async CLI application.
 - **Extensible Pipeline**: Swap or extend agents (e.g., HTML loader, CSV loader), tune hyperparameters, and integrate external sources.
 
 ## Project Structure
@@ -35,9 +37,13 @@ An agentic Retrieval-Augmented Generation (RAG) pipeline with parallel retrieval
 PDF-RAG-Reranker-Agent/
 ├── agentic_rag.py        # Core agentic RAG implementation
 ├── streamlit_app.py      # Streamlit interface for PDF ingestion and QA
+├── api_server.py         # FastAPI backend server
+├── terminal_client.py    # Terminal client for API interaction
 ├── multi/                # Advanced async CLI and multi-agent app
 │   └── agentic-rag-app.py
 ├── doc/                  # Diagrams, tutorial, and design docs
+├── pdf/                  # PDF files (auto-ingested on server start)
+│   └── .pdf
 ├── input/                # Sample PDF inputs
 ├── requirements.txt      # Python dependencies
 ├── pyproject.toml        # Project metadata
@@ -108,6 +114,39 @@ streamlit run streamlit_app.py
 - Click **Ingest PDF**
 - Enter questions and view answers interactively
 
+### FastAPI Backend & Terminal Client
+
+Launch a REST API server with automatic PDF ingestion and use a terminal client for interaction:
+
+#### Start the API Server
+```bash
+python api_server.py
+```
+The server automatically ingests `pdf/straitstrading.pdf` on startup and runs at `http://localhost:8000`
+
+#### Use the Terminal Client
+
+**Interactive Mode:**
+```bash
+python terminal_client.py
+```
+
+**Command Line Mode:**
+```bash
+# Ask a question directly
+python terminal_client.py --ask "What is the main business of this company?"
+
+# Use custom server URL
+python terminal_client.py --url http://localhost:8000
+```
+
+**Terminal Client Commands (Interactive Mode):**
+- `ask <question>` - Ask a question about the ingested PDF
+- `status` - Check system status
+- `reset` - Reset the RAG system
+- `help` - Show available commands
+- `quit` or `exit` - Exit the application
+
 ### CLI & Async App
 
 An advanced asynchronous CLI app is available in the `multi/` folder, supporting query decomposition, ChromaDB storage, and external sources.
@@ -118,6 +157,39 @@ python agentic-rag-app.py
 ```
 
 Type `/help` in the prompt for commands such as `/index`, `/search`, and `/stats`.
+
+## API Endpoints
+
+The FastAPI backend provides the following REST endpoints:
+
+### Health Check
+- **GET** `/` - Check if server is running
+
+### PDF Ingestion
+- **POST** `/ingest` - Upload and process a PDF file
+  - Form data: `file` (PDF file)
+
+### Querying
+- **POST** `/query` - Ask questions about ingested PDF
+  - JSON body: `{"question": "your question here"}`
+
+### System Management
+- **GET** `/status` - Check RAG system status
+- **DELETE** `/reset` - Reset the system (clear all data)
+
+**Example API Usage:**
+```bash
+# Check server health
+curl http://localhost:8000/
+
+# Ask a question
+curl -X POST "http://localhost:8000/query" \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What is this document about?"}'
+
+# Check system status
+curl http://localhost:8000/status
+```
 
 ## Extending & Customizing
 
