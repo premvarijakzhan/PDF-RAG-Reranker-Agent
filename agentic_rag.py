@@ -5,6 +5,7 @@ import tiktoken
 import openai
 from dotenv import load_dotenv
 from typing import List, Tuple
+from typing import Generator
 from PyPDF2 import PdfReader
 
 load_dotenv()
@@ -104,6 +105,32 @@ class QAAgent:
         print(f"[QAAgent] Received answer of length {len(answer)}")
         return answer
 
+    def answer_stream(self, question:str, context:List[str]) -> Generator[str, None, None]:
+        """Stream tokens as the model generates the answer for the given context."""
+        print(f"[QAAgent] Streaming answer with model {self.model}")
+        context_str = '---\n'.join(context)
+        prompt = (
+            "You are an expert assistant. Use the following context to answer the question.\n\n"
+            f"Context:\n{context_str}\n\n"
+            f"Question: {question}\nAnswer:"
+        )
+        stream = openai.chat.completions.create(
+            model=self.model,
+            messages=[{"role":"system","content":prompt}],
+            temperature=0.2,
+            max_tokens=500,
+            stream=True
+        )
+        # Iterate over streamed chunks and yield content pieces
+        for chunk in stream:
+            try:
+                delta = chunk.choices[0].delta
+                if delta and getattr(delta, "content", None):
+                    yield delta.content
+            except Exception:
+                # Safely ignore any malformed chunks
+                continue
+
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
         """Generate answers to the question in parallel for multiple context sets."""
         print(f"[QAAgent] Generating answers in parallel for {len(candidate_contexts)} candidates.")
@@ -197,3 +224,16 @@ class RAGOrchestrator:
         final_answer, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
         print(f"[RAGOrchestrator] Final answer selected from candidate #{chosen_idx+1}.")
         return final_answer
+
+    def query_stream(self, question:str) -> Generator[str, None, None]:
+        """Run retrieval + ranking, then stream the final answer tokens."""
+        print(f"[RAGOrchestrator] Streaming query for question: {question}")
+        # Step 1: Retrieval
+        candidate_contexts = self.retriever.retrieve_candidates(question, self.text_chunks, n_candidates=self.n_candidates, k=self.k)
+        # Step 2: QA in parallel (non-stream) to allow ranking
+        candidate_answers = self.qa.answer_parallel(question, candidate_contexts)
+        # Step 3: Ranking to pick best context
+        _, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
+        print(f"[RAGOrchestrator] Streaming final answer from candidate #{chosen_idx+1}.")
+        # Step 4: Stream the final answer generation using the chosen context
+        yield from self.qa.answer_stream(question, candidate_contexts[chosen_idx])

@@ -60,6 +60,17 @@ class RAGTerminalClient:
             return response.json()
         except requests.exceptions.RequestException as e:
             return {"success": False, "message": f"Error querying: {str(e)}"}
+
+    def query_stream(self, question: str):
+        """Stream the answer from the RAG system (generator yielding text chunks)."""
+        try:
+            with self.session.post(f"{self.base_url}/query_stream", json={"question": question}, stream=True) as response:
+                response.raise_for_status()
+                for chunk in response.iter_content(chunk_size=None, decode_unicode=True):
+                    if chunk:
+                        yield chunk
+        except requests.exceptions.RequestException as e:
+            yield f"\n[error] {str(e)}\n"
     
     def reset(self) -> dict:
         """Reset the RAG system."""
@@ -82,6 +93,7 @@ def print_help():
     print("\n📋 Available Commands:")
     print("  upload <pdf_path>  - Upload and ingest a PDF file")
     print("  ask <question>     - Ask a question about the ingested PDF")
+    print("  ask-stream <question> - Ask a question and stream the answer live")
     print("  status            - Check system status")
     print("  reset             - Reset the RAG system")
     print("  help              - Show this help message")
@@ -173,6 +185,19 @@ def interactive_mode(client: RAGTerminalClient):
                     print()
                 else:
                     print(f"❌ {result.get('message', 'Unknown error')}")
+
+            elif command == 'ask-stream':
+                if len(parts) < 2:
+                    print("❌ Usage: ask-stream <question>")
+                    continue
+                question = parts[1]
+                print(f"📡 Streaming answer for: {question}")
+                print()
+                # Stream tokens and print without newlines for live effect
+                for token in client.query_stream(question):
+                    sys.stdout.write(token)
+                    sys.stdout.flush()
+                print("\n")
             
             else:
                 print(f"❌ Unknown command: {command}")
@@ -201,13 +226,17 @@ def main():
         "--ask",
         help="Ask a question and exit"
     )
+    parser.add_argument(
+        "--ask-stream",
+        help="Ask a question and stream the answer live, then exit"
+    )
     
     args = parser.parse_args()
     
     client = RAGTerminalClient(args.url)
     
     # Non-interactive mode
-    if args.upload or args.ask:
+    if args.upload or args.ask or args.ask_stream:
         if not client.check_server_health():
             print(f"❌ Cannot connect to API server at {args.url}")
             sys.exit(1)
@@ -227,6 +256,12 @@ def main():
             else:
                 print(f"❌ {result.get('message', 'Unknown error')}")
                 sys.exit(1)
+
+        if args.ask_stream:
+            for token in client.query_stream(args.ask_stream):
+                sys.stdout.write(token)
+                sys.stdout.flush()
+            print()
     
     else:
         # Interactive mode

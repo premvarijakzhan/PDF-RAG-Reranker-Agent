@@ -8,6 +8,7 @@ import shutil
 from typing import Optional
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -127,6 +128,29 @@ async def query_rag(request: QueryRequest):
             message=f"Error processing query: {str(e)}"
         )
 
+@app.post("/query_stream")
+async def query_rag_stream(request: QueryRequest):
+    """Stream the answer to a query as it's generated."""
+    global rag_orchestrator
+
+    # Check initialization
+    if rag_orchestrator is None:
+        raise HTTPException(
+            status_code=400,
+            detail="No PDF has been ingested yet. Please ingest a PDF first."
+        )
+
+    def token_generator():
+        try:
+            for token in rag_orchestrator.query_stream(request.question):
+                yield token
+        except Exception as e:
+            # Send error message and terminate stream
+            yield f"\n[error] {str(e)}\n"
+
+    # Stream plain text chunks; clients can display incrementally
+    return StreamingResponse(token_generator(), media_type="text/plain")
+
 @app.get("/status")
 async def get_status():
     """Get the current status of the RAG system."""
@@ -154,7 +178,7 @@ def initialize_rag_with_existing_pdf():
     """Initialize RAG system with the existing PDF file."""
     global rag_orchestrator
     
-    pdf_path = "pdf/straitstrading.pdf"
+    pdf_path = "pdf/Genting.pdf"
     if os.path.exists(pdf_path):
         print(f"📚 Found existing PDF: {pdf_path}")
         print("🔄 Initializing RAG system...")
