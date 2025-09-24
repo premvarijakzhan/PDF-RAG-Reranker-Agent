@@ -6,6 +6,9 @@ Provides a command-line interface to interact with the FastAPI backend.
 import os
 import sys
 import requests
+import json
+import asyncio
+import websockets
 from typing import Optional
 import argparse
 from pathlib import Path
@@ -72,6 +75,37 @@ class RAGTerminalClient:
         except requests.exceptions.RequestException as e:
             yield f"\n[error] {str(e)}\n"
     
+    async def query_websocket(self, question: str):
+        """Stream the answer from the RAG system via WebSocket."""
+        ws_url = self.base_url.replace("http://", "ws://").replace("https://", "wss://")
+        ws_url = f"{ws_url}/ws/query"
+        
+        try:
+            async with websockets.connect(ws_url) as websocket:
+                # Send the question
+                message = json.dumps({"question": question})
+                await websocket.send(message)
+                
+                # Receive and yield responses
+                async for response in websocket:
+                    try:
+                        data = json.loads(response)
+                        
+                        if data.get("type") == "token":
+                            yield data.get("content", "")
+                        elif data.get("type") == "error":
+                            yield f"\n[error] {data.get('content', 'Unknown error')}\n"
+                            break
+                        elif data.get("type") == "done":
+                            break
+                            
+                    except json.JSONDecodeError:
+                        yield f"\n[error] Invalid response format\n"
+                        break
+                        
+        except Exception as e:
+            yield f"\n[error] WebSocket error: {str(e)}\n"
+    
     def reset(self) -> dict:
         """Reset the RAG system."""
         try:
@@ -93,7 +127,8 @@ def print_help():
     print("\n📋 Available Commands:")
     print("  upload <pdf_path>  - Upload and ingest a PDF file")
     print("  ask <question>     - Ask a question about the ingested PDF")
-    print("  ask-stream <question> - Ask a question and stream the answer live")
+    print("  ask-stream <question> - Ask a question and stream the answer live (HTTP)")
+    print("  ask-ws <question>  - Ask a question and stream the answer via WebSocket")
     print("  status            - Check system status")
     print("  reset             - Reset the RAG system")
     print("  help              - Show this help message")
@@ -198,6 +233,26 @@ def interactive_mode(client: RAGTerminalClient):
                     sys.stdout.write(token)
                     sys.stdout.flush()
                 print("\n")
+
+            elif command == 'ask-ws':
+                if len(parts) < 2:
+                    print("❌ Usage: ask-ws <question>")
+                    continue
+                question = parts[1]
+                print(f"🔌 WebSocket streaming answer for: {question}")
+                print()
+                
+                # Run the async WebSocket query
+                async def run_websocket_query():
+                    async for token in client.query_websocket(question):
+                        sys.stdout.write(token)
+                        sys.stdout.flush()
+                
+                try:
+                    asyncio.run(run_websocket_query())
+                    print("\n")
+                except Exception as e:
+                    print(f"\n❌ WebSocket error: {str(e)}")
             
             else:
                 print(f"❌ Unknown command: {command}")
@@ -230,13 +285,17 @@ def main():
         "--ask-stream",
         help="Ask a question and stream the answer live, then exit"
     )
+    parser.add_argument(
+        "--ask-ws",
+        help="Ask a question and stream the answer via WebSocket, then exit"
+    )
     
     args = parser.parse_args()
     
     client = RAGTerminalClient(args.url)
     
     # Non-interactive mode
-    if args.upload or args.ask or args.ask_stream:
+    if args.upload or args.ask or args.ask_stream or args.ask_ws:
         if not client.check_server_health():
             print(f"❌ Cannot connect to API server at {args.url}")
             sys.exit(1)
@@ -262,6 +321,19 @@ def main():
                 sys.stdout.write(token)
                 sys.stdout.flush()
             print()
+
+        if args.ask_ws:
+            async def run_websocket_cli():
+                async for token in client.query_websocket(args.ask_ws):
+                    sys.stdout.write(token)
+                    sys.stdout.flush()
+            
+            try:
+                asyncio.run(run_websocket_cli())
+                print()
+            except Exception as e:
+                print(f"❌ WebSocket error: {str(e)}")
+                sys.exit(1)
     
     else:
         # Interactive mode

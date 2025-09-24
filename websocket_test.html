@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG WebSocket Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.connecting {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .response-area {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            min-height: 200px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        .token {
+            animation: fadeIn 0.1s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #6c757d;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 RAG WebSocket Test</h1>
+        
+        <div class="input-section">
+            <label for="serverUrl">Server URL:</label>
+            <input type="text" id="serverUrl" value="ws://localhost:8000/ws/query" placeholder="ws://localhost:8000/ws/query">
+        </div>
+        
+        <div class="input-section">
+            <label for="question">Question:</label>
+            <input type="text" id="question" placeholder="Ask a question about the ingested PDF..." onkeypress="handleKeyPress(event)">
+        </div>
+        
+        <button onclick="connect()" id="connectBtn">Connect</button>
+        <button onclick="disconnect()" id="disconnectBtn" disabled>Disconnect</button>
+        <button onclick="sendQuestion()" id="sendBtn" disabled>Send Question</button>
+        <button onclick="clearResponse()" id="clearBtn">Clear Response</button>
+        
+        <div id="status" class="status disconnected">Disconnected</div>
+        
+        <div id="response" class="response-area">
+            <span class="info">Connect to the WebSocket server and ask a question to see streaming responses here...</span>
+        </div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let isConnected = false;
+
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function updateButtons() {
+            document.getElementById('connectBtn').disabled = isConnected;
+            document.getElementById('disconnectBtn').disabled = !isConnected;
+            document.getElementById('sendBtn').disabled = !isConnected;
+        }
+
+        function connect() {
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            if (!serverUrl) {
+                alert('Please enter a server URL');
+                return;
+            }
+
+            updateStatus('Connecting...', 'connecting');
+            
+            try {
+                websocket = new WebSocket(serverUrl);
+                
+                websocket.onopen = function(event) {
+                    isConnected = true;
+                    updateStatus('Connected', 'connected');
+                    updateButtons();
+                    console.log('WebSocket connected');
+                };
+                
+                websocket.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        const responseDiv = document.getElementById('response');
+                        
+                        if (data.type === 'token') {
+                            const tokenSpan = document.createElement('span');
+                            tokenSpan.className = 'token';
+                            tokenSpan.textContent = data.content;
+                            responseDiv.appendChild(tokenSpan);
+                            responseDiv.scrollTop = responseDiv.scrollHeight;
+                        } else if (data.type === 'error') {
+                            const errorSpan = document.createElement('span');
+                            errorSpan.className = 'error';
+                            errorSpan.textContent = `\n[ERROR] ${data.content}\n`;
+                            responseDiv.appendChild(errorSpan);
+                            responseDiv.scrollTop = responseDiv.scrollHeight;
+                        } else if (data.type === 'done') {
+                            const doneSpan = document.createElement('span');
+                            doneSpan.className = 'info';
+                            doneSpan.textContent = '\n\n--- Response Complete ---\n';
+                            responseDiv.appendChild(doneSpan);
+                            responseDiv.scrollTop = responseDiv.scrollHeight;
+                        }
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                        const errorSpan = document.createElement('span');
+                        errorSpan.className = 'error';
+                        errorSpan.textContent = `\n[PARSE ERROR] ${event.data}\n`;
+                        document.getElementById('response').appendChild(errorSpan);
+                    }
+                };
+                
+                websocket.onclose = function(event) {
+                    isConnected = false;
+                    updateStatus('Disconnected', 'disconnected');
+                    updateButtons();
+                    console.log('WebSocket disconnected');
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    updateStatus('Connection Error', 'disconnected');
+                    isConnected = false;
+                    updateButtons();
+                };
+                
+            } catch (error) {
+                console.error('Error creating WebSocket:', error);
+                updateStatus('Connection Failed', 'disconnected');
+                alert('Failed to connect: ' + error.message);
+            }
+        }
+
+        function disconnect() {
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+            isConnected = false;
+            updateStatus('Disconnected', 'disconnected');
+            updateButtons();
+        }
+
+        function sendQuestion() {
+            const question = document.getElementById('question').value.trim();
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            if (!isConnected || !websocket) {
+                alert('Not connected to WebSocket server');
+                return;
+            }
+            
+            // Clear previous response
+            const responseDiv = document.getElementById('response');
+            responseDiv.innerHTML = `<span class="info">Streaming response for: "${question}"</span>\n\n`;
+            
+            // Send the question
+            const message = JSON.stringify({ question: question });
+            websocket.send(message);
+            
+            console.log('Sent question:', question);
+        }
+
+        function clearResponse() {
+            document.getElementById('response').innerHTML = '<span class="info">Response cleared. Ask a question to see streaming responses here...</span>';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                if (isConnected) {
+                    sendQuestion();
+                } else {
+                    connect();
+                }
+            }
+        }
+
+        // Initialize
+        updateButtons();
+    </script>
+</body>
+</html>
