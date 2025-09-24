@@ -155,44 +155,78 @@ async def query_rag_stream(request: QueryRequest):
 @app.websocket("/ws/query")
 async def websocket_query(websocket: WebSocket):
     """
-    WebSocket endpoint (plain-text frames).
-    Client sends:  {"question":"..."} 
-    Server sends:  TOKEN:<chunk>   (many)
-                   DONE
-                   ERROR:<message>
+    WebSocket endpoint for streaming RAG queries.
+    
+    Expected message format:
+    {
+        "question": "Your question here"
+    }
+    
+    Response format:
+    {
+        "type": "token",
+        "content": "token_text"
+    }
+    or
+    {
+        "type": "error",
+        "content": "error_message"
+    }
+    or
+    {
+        "type": "done"
+    }
     """
     await websocket.accept()
+    
     try:
         while True:
+            # Receive message from client
             data = await websocket.receive_text()
-
-            # accept JSON or raw text (optional)
+            
             try:
-                msg = json.loads(data)
-                question = (msg.get("question") or "").strip()
+                message = json.loads(data)
+                question = message.get("question", "").strip()
+                
+                if not question:
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "content": "Question cannot be empty"
+                    }))
+                    continue
+                
+                if not rag_orchestrator:
+                    await websocket.send_text(json.dumps({
+                        "type": "error", 
+                        "content": "RAG system not initialized. Please ingest a PDF first."
+                    }))
+                    continue
+                
+                # Stream the response
+                try:
+                    for token in rag_orchestrator.query_stream(question):
+                        await websocket.send_text(json.dumps({
+                            "type": "token",
+                            "content": token
+                        }))
+                    
+                    # Send completion signal
+                    await websocket.send_text(json.dumps({
+                        "type": "done"
+                    }))
+                    
+                except Exception as e:
+                    await websocket.send_text(json.dumps({
+                        "type": "error",
+                        "content": f"Error processing query: {str(e)}"
+                    }))
+                    
             except json.JSONDecodeError:
-                # allow raw text like: Q:Your question here
-                question = data.removeprefix("Q:").strip()
-
-            if not question:
-                await websocket.send_text("ERROR:Question cannot be empty")
-                continue
-
-            if rag_orchestrator is None:
-                await websocket.send_text(
-                    "ERROR:RAG system not initialized. Please ingest a PDF first."
-                )
-                continue
-
-            try:
-                # stream tokens
-                for token in rag_orchestrator.query_stream(question):
-                    # IMPORTANT: avoid newlines in token or escape if needed
-                    await websocket.send_text(f"TOKEN:{token}")
-                await websocket.send_text("DONE")
-            except Exception as e:
-                await websocket.send_text(f"ERROR:{str(e)}")
-
+                await websocket.send_text(json.dumps({
+                    "type": "error",
+                    "content": "Invalid JSON format"
+                }))
+                
     except WebSocketDisconnect:
         print("WebSocket client disconnected")
     except Exception as e:
