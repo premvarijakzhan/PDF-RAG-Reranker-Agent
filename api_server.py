@@ -202,12 +202,27 @@ async def websocket_query(websocket: WebSocket):
                     }))
                     continue
                 
-                # Stream the response
+                # Stream the response (horizontal batching)
                 try:
+                    token_buffer = []
+                    batch_size = 3  # Send 3 tokens at once for horizontal effect
+                    
                     for token in rag_orchestrator.query_stream(question):
+                        token_buffer.append(token)
+                        
+                        # Send batch when buffer is full
+                        if len(token_buffer) >= batch_size:
+                            await websocket.send_text(json.dumps({
+                                "type": "token",
+                                "content": "".join(token_buffer)
+                            }))
+                            token_buffer = []
+                    
+                    # Send remaining tokens
+                    if token_buffer:
                         await websocket.send_text(json.dumps({
                             "type": "token",
-                            "content": token
+                            "content": "".join(token_buffer)
                         }))
                     
                     # Send completion signal
