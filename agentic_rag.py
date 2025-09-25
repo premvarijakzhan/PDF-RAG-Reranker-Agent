@@ -89,11 +89,35 @@ class QAAgent:
     def answer(self, question:str, context:List[str]) -> str:
         print(f"[QAAgent] Answering question with model {self.model}")
         context_str = '---\n'.join(context)
-        prompt = (
-            "You are an expert assistant. Use the following context to answer the question.\n\n"
-            f"Context:\n{context_str}\n\n"
-            f"Question: {question}\nAnswer:"
-        )
+        
+        # Check if context is meaningful/relevant
+        if self._is_context_relevant(question, context_str):
+            # Use RAG context
+            prompt = (
+                "You are an expert assistant. Use the following context to answer the question.\n\n"
+                f"Context:\n{context_str}\n\n"
+                f"Question: {question}\nAnswer:"
+            )
+            print("[QAAgent] Using RAG context for answer")
+        else:
+            # Fallback to general knowledge for related queries only
+            if self._is_general_query_allowed(question):
+                prompt = (
+                    "You are a helpful assistant. Answer the following question using your general knowledge. "
+                    "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    f"Question: {question}\nAnswer:"
+                )
+                print("[QAAgent] Using OpenAI general knowledge fallback")
+            else:
+                # For non-GIS queries, refuse to answer
+                prompt = (
+                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
+                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    f"Your question: {question}\n"
+                    "Please ask questions about the document content or GIS-related topics instead."
+                )
+                print("[QAAgent] Refusing to answer non-GIS query")
+        
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
             model=self.model,
@@ -109,11 +133,35 @@ class QAAgent:
         """Stream tokens as the model generates the answer for the given context."""
         print(f"[QAAgent] Streaming answer with model {self.model}")
         context_str = '---\n'.join(context)
-        prompt = (
-            "You are an expert assistant. Use the following context to answer the question.\n\n"
-            f"Context:\n{context_str}\n\n"
-            f"Question: {question}\nAnswer:"
-        )
+        
+        # Check if context is meaningful/relevant
+        if self._is_context_relevant(question, context_str):
+            # Use RAG context
+            prompt = (
+                "You are an expert assistant. Use the following context to answer the question.\n\n"
+                f"Context:\n{context_str}\n\n"
+                f"Question: {question}\nAnswer:"
+            )
+            print("[QAAgent] Using RAG context for answer")
+        else:
+            # Fallback to general knowledge for related queries only
+            if self._is_general_query_allowed(question):
+                prompt = (
+                    "You are a helpful assistant. Answer the following question using your general knowledge. "
+                    "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    f"Question: {question}\nAnswer:"
+                )
+                print("[QAAgent] Using OpenAI general knowledge fallback")
+            else:
+                # For non-GIS queries, refuse to answer
+                prompt = (
+                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
+                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    f"Your question: {question}\n"
+                    "Please ask questions about the document content or GIS-related topics instead."
+                )
+                print("[QAAgent] Refusing to answer non-GIS query")
+        
         stream = openai.chat.completions.create(
             model=self.model,
             messages=[{"role":"system","content":prompt}],
@@ -130,6 +178,70 @@ class QAAgent:
             except Exception:
                 # Safely ignore any malformed chunks
                 continue
+
+    def _is_context_relevant(self, question: str, context: str) -> bool:
+        """Check if the retrieved context is relevant to the question."""
+        # Simple heuristic: if context is too short or generic, it's likely not relevant
+        if len(context.strip()) < 50:
+            return False
+        
+        # Check for common irrelevant phrases
+        irrelevant_phrases = [
+            "no relevant information",
+            "not found in the document",
+            "unable to find",
+            "no information available"
+        ]
+        
+        context_lower = context.lower()
+        for phrase in irrelevant_phrases:
+            if phrase in context_lower:
+                return False
+        
+        # Use a simple keyword overlap check
+        question_words = set(question.lower().split())
+        context_words = set(context.lower().split())
+        
+        # Remove common stop words
+        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those'}
+        
+        question_words = question_words - stop_words
+        context_words = context_words - stop_words
+        
+        # Calculate overlap ratio
+        if len(question_words) == 0:
+            return True  # Default to using context if no meaningful words in question
+        
+        overlap = len(question_words.intersection(context_words))
+        overlap_ratio = overlap / len(question_words)
+        
+        # If less than 20% overlap, consider context not relevant
+        return overlap_ratio >= 0.2
+
+    def _is_general_query_allowed(self, question: str) -> bool:
+        """Check if the question is a GIS-related general query that should be answered with OpenAI knowledge."""
+        question_lower = question.lower()
+        
+        # GIS-related keywords that indicate the query is within our domain
+        gis_keywords = [
+            'gis', 'geographic', 'geospatial', 'spatial', 'mapping', 'map', 'cartography',
+            'coordinates', 'latitude', 'longitude', 'projection', 'datum', 'coordinate system',
+            'remote sensing', 'satellite', 'imagery', 'raster', 'vector', 'shapefile',
+            'geodatabase', 'topology', 'buffer', 'overlay', 'spatial analysis',
+            'geocoding', 'geoprocessing', 'spatial query', 'spatial join',
+            'arcgis', 'qgis', 'postgis', 'ogr', 'gdal', 'geojson', 'kml', 'wms', 'wfs',
+            'location', 'geography', 'terrain', 'elevation', 'dem', 'contour',
+            'navigation', 'routing', 'distance', 'area', 'perimeter', 'polygon',
+            'point', 'line', 'feature', 'attribute', 'field', 'layer'
+        ]
+        
+        # Check if question contains GIS-related keywords
+        for keyword in gis_keywords:
+            if keyword in question_lower:
+                return True
+        
+        # Refuse non-GIS queries
+        return False
 
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
         """Generate answers to the question in parallel for multiple context sets."""

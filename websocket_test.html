@@ -179,10 +179,16 @@
                         const responseDiv = document.getElementById('response');
                         
                         if (data.type === 'token') {
-                            const tokenSpan = document.createElement('span');
-                            tokenSpan.className = 'token';
-                            tokenSpan.textContent = data.content;
-                            responseDiv.appendChild(tokenSpan);
+                            // Find or create the current response container
+                            let currentResponse = responseDiv.querySelector('.current-response');
+                            if (!currentResponse) {
+                                currentResponse = document.createElement('div');
+                                currentResponse.className = 'current-response';
+                                responseDiv.appendChild(currentResponse);
+                            }
+                            
+                            // Append token directly to the text content (horizontal)
+                            currentResponse.textContent += data.content;
                             responseDiv.scrollTop = responseDiv.scrollHeight;
                         } else if (data.type === 'error') {
                             const errorSpan = document.createElement('span');
@@ -191,6 +197,12 @@
                             responseDiv.appendChild(errorSpan);
                             responseDiv.scrollTop = responseDiv.scrollHeight;
                         } else if (data.type === 'done') {
+                            // Mark current response as complete
+                            const currentResponse = responseDiv.querySelector('.current-response');
+                            if (currentResponse) {
+                                currentResponse.className = 'completed-response';
+                            }
+                            
                             const doneSpan = document.createElement('span');
                             doneSpan.className = 'info';
                             doneSpan.textContent = '\n\n--- Response Complete ---\n';
