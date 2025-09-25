@@ -147,6 +147,10 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
+                "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -157,6 +161,10 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                    "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                    "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                    "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
