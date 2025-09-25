@@ -174,48 +174,48 @@
                 };
                 
                 websocket.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
-                        const responseDiv = document.getElementById('response');
-                        
-                        if (data.type === 'token') {
-                            // Find or create the current response container
-                            let currentResponse = responseDiv.querySelector('.current-response');
-                            if (!currentResponse) {
-                                currentResponse = document.createElement('div');
-                                currentResponse.className = 'current-response';
-                                responseDiv.appendChild(currentResponse);
-                            }
-                            
-                            // Append token directly to the text content (horizontal)
-                            currentResponse.textContent += data.content;
-                            responseDiv.scrollTop = responseDiv.scrollHeight;
-                        } else if (data.type === 'error') {
-                            const errorSpan = document.createElement('span');
-                            errorSpan.className = 'error';
-                            errorSpan.textContent = `\n[ERROR] ${data.content}\n`;
-                            responseDiv.appendChild(errorSpan);
-                            responseDiv.scrollTop = responseDiv.scrollHeight;
-                        } else if (data.type === 'done') {
-                            // Mark current response as complete
-                            const currentResponse = responseDiv.querySelector('.current-response');
-                            if (currentResponse) {
-                                currentResponse.className = 'completed-response';
-                            }
-                            
-                            const doneSpan = document.createElement('span');
-                            doneSpan.className = 'info';
-                            doneSpan.textContent = '\n\n--- Response Complete ---\n';
-                            responseDiv.appendChild(doneSpan);
-                            responseDiv.scrollTop = responseDiv.scrollHeight;
+                    const responseDiv = document.getElementById('response');
+                    
+                    // Handle raw text tokens (like query_stream)
+                    const token = event.data;
+                    
+                    // Check for completion signal
+                    if (token.includes('--- Response Complete ---')) {
+                        // Mark current response as complete
+                        const currentResponse = responseDiv.querySelector('.current-response');
+                        if (currentResponse) {
+                            currentResponse.className = 'completed-response';
                         }
-                    } catch (e) {
-                        console.error('Error parsing message:', e);
+                        
+                        const doneSpan = document.createElement('span');
+                        doneSpan.className = 'info';
+                        doneSpan.textContent = token;
+                        responseDiv.appendChild(doneSpan);
+                        responseDiv.scrollTop = responseDiv.scrollHeight;
+                        return;
+                    }
+                    
+                    // Check for error messages
+                    if (token.startsWith('[ERROR]')) {
                         const errorSpan = document.createElement('span');
                         errorSpan.className = 'error';
-                        errorSpan.textContent = `\n[PARSE ERROR] ${event.data}\n`;
-                        document.getElementById('response').appendChild(errorSpan);
+                        errorSpan.textContent = token;
+                        responseDiv.appendChild(errorSpan);
+                        responseDiv.scrollTop = responseDiv.scrollHeight;
+                        return;
                     }
+                    
+                    // Handle regular tokens
+                    let currentResponse = responseDiv.querySelector('.current-response');
+                    if (!currentResponse) {
+                        currentResponse = document.createElement('div');
+                        currentResponse.className = 'current-response';
+                        responseDiv.appendChild(currentResponse);
+                    }
+                    
+                    // Append token directly to the text content (horizontal streaming)
+                    currentResponse.textContent += token;
+                    responseDiv.scrollTop = responseDiv.scrollHeight;
                 };
                 
                 websocket.onclose = function(event) {
@@ -265,9 +265,8 @@
             const responseDiv = document.getElementById('response');
             responseDiv.innerHTML = `<span class="info">Streaming response for: "${question}"</span>\n\n`;
             
-            // Send the question
-            const message = JSON.stringify({ question: question });
-            websocket.send(message);
+            // Send raw text question (no JSON needed)
+            websocket.send(question);
             
             console.log('Sent question:', question);
         }

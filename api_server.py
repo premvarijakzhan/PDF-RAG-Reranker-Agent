@@ -202,33 +202,12 @@ async def websocket_query(websocket: WebSocket):
                     }))
                     continue
                 
-                # Stream the response with horizontal batching
+                # Stream the response (ChatGPT-style streaming)
                 try:
-                    token_buffer = ""
-                    word_count = 0
-                    
                     for token in rag_orchestrator.query_stream(question):
-                        token_buffer += token
-                        
-                        # Send tokens in batches for horizontal display
-                        # Batch by words (spaces) or punctuation for natural flow
-                        if token.endswith(' ') or token in ['.', '!', '?', ',', ';', ':']:
-                            word_count += 1
-                            
-                            # Send batch every 3-5 words or at sentence endings
-                            if word_count >= 3 or token in ['.', '!', '?']:
-                                await websocket.send_text(json.dumps({
-                                    "type": "token",
-                                    "content": token_buffer
-                                }))
-                                token_buffer = ""
-                                word_count = 0
-                    
-                    # Send any remaining tokens
-                    if token_buffer:
                         await websocket.send_text(json.dumps({
                             "type": "token",
-                            "content": token_buffer
+                            "content": token
                         }))
                     
                     # Send completion signal
@@ -237,10 +216,7 @@ async def websocket_query(websocket: WebSocket):
                     }))
                     
                 except Exception as e:
-                    await websocket.send_text(json.dumps({
-                        "type": "error",
-                        "content": f"Error processing query: {str(e)}"
-                    }))
+                    await websocket.send_text(f"\n[ERROR] {str(e)}\n")
                     
             except json.JSONDecodeError:
                 await websocket.send_text(json.dumps({
