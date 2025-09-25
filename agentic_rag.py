@@ -94,39 +94,37 @@ class QAAgent:
         if self._is_context_relevant(question, context_str):
             # Use RAG context
             prompt = (
-                "You are an expert assistant. Use the following context to answer the question.\n"
-                "Follow these rules:\n"
-                "- Directly answer the user's question\n"
-                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                "- Use line breaks and simple bullet points (- or •) for structure\n"
-                "- Professional, educational tone\n"
-                "- Maximum 150 words\n"
-                "- Double line breaks for paragraphs, single for bullet points\n"
-                "- DO NOT mention file names or paths\n"
-                "- For errors, say 'an error occurred' not technical terms\n"
-                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
+                "You are an expert assistant. Use the following context to answer the question.\n\n"
+                "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
             print("[QAAgent] Using RAG context for answer")
         else:
-            # Fallback to general knowledge
-            prompt = (
-                "You are a helpful assistant. Answer the following question using your general knowledge. "
-                "Focus on providing accurate, helpful information.\n\n"
-                "Follow these rules:\n"
-                "- Directly answer the user's question\n"
-                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                "- Use line breaks and simple bullet points (- or •) for structure\n"
-                "- Professional, educational tone\n"
-                "- Maximum 150 words\n"
-                "- Double line breaks for paragraphs, single for bullet points\n"
-                "- DO NOT mention file names or paths\n"
-                "- For errors, say 'an error occurred' not technical terms\n"
-                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
-                f"Question: {question}\nAnswer:"
-            )
-            print("[QAAgent] Using general knowledge fallback")
+            # Fallback to general knowledge for related queries only
+            if self._is_general_query_allowed(question):
+                prompt = (
+                    "You are a helpful assistant. Answer the following question using your general knowledge. "
+                    "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                    "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                    "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                    "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
+                    f"Question: {question}\nAnswer:"
+                )
+                print("[QAAgent] Using OpenAI general knowledge fallback")
+            else:
+                # For non-GIS queries, refuse to answer
+                prompt = (
+                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
+                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    f"Your question: {question}\n"
+                    "Please ask questions about the document content or GIS-related topics instead."
+                )
+                print("[QAAgent] Refusing to answer non-GIS query")
         
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
@@ -149,38 +147,36 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Follow these rules:\n"
-                "- Directly answer the user's question\n"
-                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                "- Use line breaks and simple bullet points (- or •) for structure\n"
-                "- Professional, educational tone\n"
-                "- Maximum 150 words\n"
-                "- Double line breaks for paragraphs, single for bullet points\n"
-                "- DO NOT mention file names or paths\n"
-                "- For errors, say 'an error occurred' not technical terms\n"
-                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
+                "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
             print("[QAAgent] Using RAG context for answer")
         else:
-            # Fallback to general knowledge
-            prompt = (
-                "You are a helpful assistant. Answer the following question using your general knowledge. "
-                "Focus on providing accurate, helpful information.\n\n"
-                "Follow these rules:\n"
-                "- Directly answer the user's question\n"
-                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                "- Use line breaks and simple bullet points (- or •) for structure\n"
-                "- Professional, educational tone\n"
-                "- Maximum 150 words\n"
-                "- Double line breaks for paragraphs, single for bullet points\n"
-                "- DO NOT mention file names or paths\n"
-                "- For errors, say 'an error occurred' not technical terms\n"
-                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
-                f"Question: {question}\nAnswer:"
-            )
-            print("[QAAgent] Using general knowledge fallback")
+            # Fallback to general knowledge for related queries only
+            if self._is_general_query_allowed(question):
+                prompt = (
+                    "You are a helpful assistant. Answer the following question using your general knowledge. "
+                    "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    "IMPORTANT: Format your response using these markup tags for better readability:\n"
+                    "- Use <Bold>text</> for important points, key facts, or emphasis\n"
+                    "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
+                    "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
+                    f"Question: {question}\nAnswer:"
+                )
+                print("[QAAgent] Using OpenAI general knowledge fallback")
+            else:
+                # For non-GIS queries, refuse to answer
+                prompt = (
+                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
+                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    f"Your question: {question}\n"
+                    "Please ask questions about the document content or GIS-related topics instead."
+                )
+                print("[QAAgent] Refusing to answer non-GIS query")
         
         stream = openai.chat.completions.create(
             model=self.model,
@@ -293,28 +289,7 @@ class RankingAgent:
             print(f"Candidate #{idx} Answer: {ans}\n----------------------")
 
         ranking_prompt = f"""
-You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.
-
-Follow these rules:
-- Directly answer the user's question
-- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting
-- Use line breaks and simple bullet points (- or •) for structure
-- Professional, educational tone
-- Maximum 150 words
-- Double line breaks for paragraphs, single for bullet points
-- DO NOT mention file names or paths
-- For errors, say 'an error occurred' not technical terms
-- Use <bold></> for key facts and <italic></> for subtle emphasis
-
-Output exactly this format:
-Candidate #N
-Reason: <reason>
-
-Best Answer:
-<full text>
-
-Question: {question}
-"""
+You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.\n\nOutput exactly this format:\nCandidate #N\nReason: <reason>\n\nBest Answer:\n<full text>\n\nQuestion: {question}\n"""
         summary = ""
         for idx, (ctx, ans) in enumerate(zip(candidate_contexts, candidate_answers), 1):
             ctx_part = "\n".join(ctx)
