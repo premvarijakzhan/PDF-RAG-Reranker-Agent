@@ -283,7 +283,19 @@ class RankingAgent:
             print(f"Candidate #{idx} Answer: {ans}\n----------------------")
 
         ranking_prompt = f"""
-You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.\n\nOutput exactly this format:\nCandidate #N\nReason: <reason>\n\nBest Answer:\n<full text>\n\nQuestion: {question}\n"""
+You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.
+
+NEVER use ** or markdown. Use <Bold>text</> for important points and <Italic>text</> for details.
+
+Output exactly this format:
+Candidate #N
+Reason: <reason>
+
+Best Answer:
+<full text>
+
+Question: {question}
+"""
         summary = ""
         for idx, (ctx, ans) in enumerate(zip(candidate_contexts, candidate_answers), 1):
             ctx_part = "\n".join(ctx)
