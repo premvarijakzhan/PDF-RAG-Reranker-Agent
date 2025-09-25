@@ -110,33 +110,23 @@ class QAAgent:
             )
             print("[QAAgent] Using RAG context for answer")
         else:
-            # Fallback to general knowledge for related queries only
-            if self._is_general_query_allowed(question):
-                prompt = (
-                    "You are a helpful assistant. Answer the following question using your general knowledge. "
-                    "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "Follow these rules:\n"
-                    "- Directly answer the user's question\n"
-                    "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                    "- Use line breaks and simple bullet points (- or •) for structure\n"
-                    "- Professional, educational tone\n"
-                    "- Maximum 150 words\n"
-                    "- Double line breaks for paragraphs, single for bullet points\n"
-                    "- DO NOT mention file names or paths\n"
-                    "- For errors, say 'an error occurred' not technical terms\n"
-                    "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
-                    f"Question: {question}\nAnswer:"
-                )
-                print("[QAAgent] Using OpenAI general knowledge fallback")
-            else:
-                # For non-GIS queries, refuse to answer
-                prompt = (
-                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
-                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
-                    f"Your question: {question}\n"
-                    "Please ask questions about the document content or GIS-related topics instead."
-                )
-                print("[QAAgent] Refusing to answer non-GIS query")
+            # Fallback to general knowledge
+            prompt = (
+                "You are a helpful assistant. Answer the following question using your general knowledge. "
+                "Focus on providing accurate, helpful information.\n\n"
+                "Follow these rules:\n"
+                "- Directly answer the user's question\n"
+                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                "- Use line breaks and simple bullet points (- or •) for structure\n"
+                "- Professional, educational tone\n"
+                "- Maximum 150 words\n"
+                "- Double line breaks for paragraphs, single for bullet points\n"
+                "- DO NOT mention file names or paths\n"
+                "- For errors, say 'an error occurred' not technical terms\n"
+                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
+                f"Question: {question}\nAnswer:"
+            )
+            print("[QAAgent] Using general knowledge fallback")
         
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
@@ -174,33 +164,23 @@ class QAAgent:
             )
             print("[QAAgent] Using RAG context for answer")
         else:
-            # Fallback to general knowledge for related queries only
-            if self._is_general_query_allowed(question):
-                prompt = (
-                    "You are a helpful assistant. Answer the following question using your general knowledge. "
-                    "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "Follow these rules:\n"
-                    "- Directly answer the user's question\n"
-                    "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
-                    "- Use line breaks and simple bullet points (- or •) for structure\n"
-                    "- Professional, educational tone\n"
-                    "- Maximum 150 words\n"
-                    "- Double line breaks for paragraphs, single for bullet points\n"
-                    "- DO NOT mention file names or paths\n"
-                    "- For errors, say 'an error occurred' not technical terms\n"
-                    "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
-                    f"Question: {question}\nAnswer:"
-                )
-                print("[QAAgent] Using OpenAI general knowledge fallback")
-            else:
-                # For non-GIS queries, refuse to answer
-                prompt = (
-                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
-                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
-                    f"Your question: {question}\n"
-                    "Please ask questions about the document content or GIS-related topics instead."
-                )
-                print("[QAAgent] Refusing to answer non-GIS query")
+            # Fallback to general knowledge
+            prompt = (
+                "You are a helpful assistant. Answer the following question using your general knowledge. "
+                "Focus on providing accurate, helpful information.\n\n"
+                "Follow these rules:\n"
+                "- Directly answer the user's question\n"
+                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                "- Use line breaks and simple bullet points (- or •) for structure\n"
+                "- Professional, educational tone\n"
+                "- Maximum 150 words\n"
+                "- Double line breaks for paragraphs, single for bullet points\n"
+                "- DO NOT mention file names or paths\n"
+                "- For errors, say 'an error occurred' not technical terms\n"
+                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
+                f"Question: {question}\nAnswer:"
+            )
+            print("[QAAgent] Using general knowledge fallback")
         
         stream = openai.chat.completions.create(
             model=self.model,
