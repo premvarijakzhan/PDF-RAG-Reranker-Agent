@@ -95,7 +95,7 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Use <Bold>text</> for important points and <Italic>text</> for details.\n\n"
+                "NEVER use ** or markdown. Use <Bold>text</> for important points and <Italic>text</> for details.\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -106,7 +106,7 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "Use <Bold>text</> for important points and <Italic>text</> for details.\n\n"
+                    "NEVER use ** or markdown. Use <Bold>text</> for important points and <Italic>text</> for details.\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
