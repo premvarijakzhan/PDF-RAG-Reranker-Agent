@@ -94,8 +94,17 @@ class QAAgent:
         if self._is_context_relevant(question, context_str):
             # Use RAG context
             prompt = (
-                "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "NEVER use ** or markdown. Use <Bold>text</> instead of **text** for important points and <Italic>text</> for details.\n\n"
+                "You are an expert assistant. Use the following context to answer the question.\n"
+                "Follow these rules:\n"
+                "- Directly answer the user's question\n"
+                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                "- Use line breaks and simple bullet points (- or •) for structure\n"
+                "- Professional, educational tone\n"
+                "- Maximum 150 words\n"
+                "- Double line breaks for paragraphs, single for bullet points\n"
+                "- DO NOT mention file names or paths\n"
+                "- For errors, say 'an error occurred' not technical terms\n"
+                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -106,7 +115,16 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "NEVER use ** or markdown. Use <Bold>text</> instead of **text** for important points and <Italic>text</> for details.\n\n"
+                    "Follow these rules:\n"
+                    "- Directly answer the user's question\n"
+                    "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                    "- Use line breaks and simple bullet points (- or •) for structure\n"
+                    "- Professional, educational tone\n"
+                    "- Maximum 150 words\n"
+                    "- Double line breaks for paragraphs, single for bullet points\n"
+                    "- DO NOT mention file names or paths\n"
+                    "- For errors, say 'an error occurred' not technical terms\n"
+                    "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
@@ -140,11 +158,17 @@ class QAAgent:
         if self._is_context_relevant(question, context_str):
             # Use RAG context
             prompt = (
-                "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "IMPORTANT: Format your response using these markup tags for better readability:\n"
-                "- Use <Bold>text</> for important points, key facts, or emphasis\n"
-                "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
-                "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
+                "You are an expert assistant. Use the following context to answer the question.\n"
+                "Follow these rules:\n"
+                "- Directly answer the user's question\n"
+                "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                "- Use line breaks and simple bullet points (- or •) for structure\n"
+                "- Professional, educational tone\n"
+                "- Maximum 150 words\n"
+                "- Double line breaks for paragraphs, single for bullet points\n"
+                "- DO NOT mention file names or paths\n"
+                "- For errors, say 'an error occurred' not technical terms\n"
+                "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -155,10 +179,16 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "IMPORTANT: Format your response using these markup tags for better readability:\n"
-                    "- Use <Bold>text</> for important points, key facts, or emphasis\n"
-                    "- Use <Italic>text</> for supporting details, explanations, or secondary information\n"
-                    "- Apply formatting naturally throughout your response to highlight relevant information\n\n"
+                    "Follow these rules:\n"
+                    "- Directly answer the user's question\n"
+                    "- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting\n"
+                    "- Use line breaks and simple bullet points (- or •) for structure\n"
+                    "- Professional, educational tone\n"
+                    "- Maximum 150 words\n"
+                    "- Double line breaks for paragraphs, single for bullet points\n"
+                    "- DO NOT mention file names or paths\n"
+                    "- For errors, say 'an error occurred' not technical terms\n"
+                    "- Use <bold></> for key facts and <italic></> for subtle emphasis\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
@@ -285,7 +315,16 @@ class RankingAgent:
         ranking_prompt = f"""
 You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.
 
-NEVER use ** or markdown. Use <Bold>text</> for important points and <Italic>text</> for details.
+Follow these rules:
+- Directly answer the user's question
+- Use ONLY plain text - NO markdown, NO asterisks (*), NO special formatting
+- Use line breaks and simple bullet points (- or •) for structure
+- Professional, educational tone
+- Maximum 150 words
+- Double line breaks for paragraphs, single for bullet points
+- DO NOT mention file names or paths
+- For errors, say 'an error occurred' not technical terms
+- Use <bold></> for key facts and <italic></> for subtle emphasis
 
 Output exactly this format:
 Candidate #N
