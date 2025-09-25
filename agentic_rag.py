@@ -95,6 +95,7 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
+                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -105,6 +106,7 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
@@ -139,6 +141,7 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
+                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -149,6 +152,7 @@ class QAAgent:
                 prompt = (
                     "You are a helpful assistant. Answer the following question using your general knowledge. "
                     "Focus on providing accurate, helpful information related to the topic.\n\n"
+                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
