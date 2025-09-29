@@ -11,7 +11,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 EMBED_MODEL = "text-embedding-ada-002"
-CHAT_MODEL = "gpt-3.5-turbo"
+CHAT_MODEL = "gpt-4o-mini"
 ENC = tiktoken.get_encoding("cl100k_base")
 
 def num_tokens(text:str) -> int:
@@ -167,7 +167,7 @@ You are an expert assistant judging a RAG system. Given several candidate answer
 
 class RAGOrchestrator:
     """Fully agentic and parallel RAG orchestrator."""
-    def __init__(self, n_candidates:int=3, k:int=5):
+    def __init__(self, n_candidates:int=3, k:int=5, auto_load_pdf:bool=True):
         print("[RAGOrchestrator] Initializing agents")
         self.loader = PDFLoaderAgent()
         self.embedder = EmbeddingAgent()
@@ -177,6 +177,15 @@ class RAGOrchestrator:
         self.ranker = RankingAgent()
         self.n_candidates = n_candidates
         self.k = k
+        
+        # Auto-load PDF from pdf folder if enabled
+        if auto_load_pdf:
+            pdf_path = os.path.join(os.path.dirname(__file__), "pdf", "Genting.pdf")
+            if os.path.exists(pdf_path):
+                print(f"[RAGOrchestrator] Auto-loading PDF: {pdf_path}")
+                self.ingest(pdf_path)
+            else:
+                print(f"[RAGOrchestrator] PDF not found at {pdf_path}, skipping auto-load")
 
     def ingest(self, pdf_path:str):
         print(f"[RAGOrchestrator] Ingesting PDF: {pdf_path}")
