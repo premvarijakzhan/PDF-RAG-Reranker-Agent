@@ -92,24 +92,50 @@ class QAAgent:
         
         # Check if context is meaningful/relevant
         if self._is_context_relevant(question, context_str):
-            # Use RAG context
+            # Enhanced RAG context prompt with better instructions
             prompt = (
-                "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
+                "You are an expert assistant specializing in Resort World Sentosa information. "
+                "Use the provided context to answer the question accurately and comprehensively.\n\n"
+                
+                "FORMATTING INSTRUCTIONS:\n"
+                "- Output ONLY plain text with custom highlighting tags\n"
+                "- Do NOT use markdown formatting like **bold** or *italic*\n"
+                "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+                "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
+                "- Structure your answer clearly with proper paragraphs\n"
+                "- Be specific and cite relevant details from the context\n\n"
+                
+                "ANSWER GUIDELINES:\n"
+                "- Provide complete, accurate information based on the context\n"
+                "- Include specific details, numbers, and facts when available\n"
+                "- If the context contains multiple relevant pieces of information, organize them logically\n"
+                "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
+                "- Be helpful and informative while staying factual\n\n"
+                
                 f"Context:\n{context_str}\n\n"
-                f"Question: {question}\nAnswer:"
+                f"Question: {question}\n\n"
+                "Answer based on the provided context:"
             )
-            print("[QAAgent] Using RAG context for answer")
+            print("[QAAgent] Using enhanced RAG context for answer")
         else:
             # Fallback to general knowledge for related queries only
             if self._is_general_query_allowed(question):
                 prompt = (
-                    "You are a helpful assistant specializing in Resort World Sentosa information. Answer the following question using your general knowledge about Resort World Sentosa, its attractions, facilities, and services. "
-                    "Focus on providing accurate, helpful information related to Resort World Sentosa and Sentosa Island.\n\n"
-                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
-                    f"Question: {question}\nAnswer:"
+                    "You are a helpful assistant specializing in Resort World Sentosa information. "
+                    "Answer the following question using your general knowledge about Resort World Sentosa, "
+                    "its attractions, facilities, and services. Focus on providing accurate, helpful information "
+                    "related to Resort World Sentosa and Sentosa Island.\n\n"
+                    
+                    "FORMATTING INSTRUCTIONS:\n"
+                    "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+                    "- Use <italic>text</> tags for emphasis and descriptions\n"
+                    "- Provide comprehensive and accurate information\n"
+                    "- Structure your answer clearly\n\n"
+                    
+                    f"Question: {question}\n\n"
+                    "Answer using your knowledge of Resort World Sentosa:"
                 )
-                print("[QAAgent] Using OpenAI general knowledge fallback")
+                print("[QAAgent] Using enhanced general knowledge fallback")
             else:
                 # For non-Resort World Sentosa queries, refuse to answer
                 prompt = (
@@ -125,7 +151,7 @@ class QAAgent:
             model=self.model,
             messages=[{"role":"system","content":prompt}],
             temperature=0.2,
-            max_tokens=500
+            max_tokens=800
         )
         answer = resp.choices[0].message.content.strip()
         print(f"[QAAgent] Received answer of length {len(answer)}")
@@ -138,24 +164,50 @@ class QAAgent:
         
         # Check if context is meaningful/relevant
         if self._is_context_relevant(question, context_str):
-            # Use RAG context
+            # Enhanced RAG context prompt with better instructions
             prompt = (
-                "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
+                "You are an expert assistant specializing in Resort World Sentosa information. "
+                "Use the provided context to answer the question accurately and comprehensively.\n\n"
+                
+                "FORMATTING INSTRUCTIONS:\n"
+                "- Output ONLY plain text with custom highlighting tags\n"
+                "- Do NOT use markdown formatting like **bold** or *italic*\n"
+                "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+                "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
+                "- Structure your answer clearly with proper paragraphs\n"
+                "- Be specific and cite relevant details from the context\n\n"
+                
+                "ANSWER GUIDELINES:\n"
+                "- Provide complete, accurate information based on the context\n"
+                "- Include specific details, numbers, and facts when available\n"
+                "- If the context contains multiple relevant pieces of information, organize them logically\n"
+                "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
+                "- Be helpful and informative while staying factual\n\n"
+                
                 f"Context:\n{context_str}\n\n"
-                f"Question: {question}\nAnswer:"
+                f"Question: {question}\n\n"
+                "Answer based on the provided context:"
             )
-            print("[QAAgent] Using RAG context for answer")
+            print("[QAAgent] Using enhanced RAG context for streaming answer")
         else:
             # Fallback to general knowledge for related queries only
             if self._is_general_query_allowed(question):
                 prompt = (
-                    "You are a helpful assistant specializing in Resort World Sentosa information. Answer the following question using your general knowledge about Resort World Sentosa, its attractions, facilities, and services. "
-                    "Focus on providing accurate, helpful information related to Resort World Sentosa and Sentosa Island.\n\n"
-                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
-                    f"Question: {question}\nAnswer:"
+                    "You are a helpful assistant specializing in Resort World Sentosa information. "
+                    "Answer the following question using your general knowledge about Resort World Sentosa, "
+                    "its attractions, facilities, and services. Focus on providing accurate, helpful information "
+                    "related to Resort World Sentosa and Sentosa Island.\n\n"
+                    
+                    "FORMATTING INSTRUCTIONS:\n"
+                    "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+                    "- Use <italic>text</> tags for emphasis and descriptions\n"
+                    "- Provide comprehensive and accurate information\n"
+                    "- Structure your answer clearly\n\n"
+                    
+                    f"Question: {question}\n\n"
+                    "Answer using your knowledge of Resort World Sentosa:"
                 )
-                print("[QAAgent] Using OpenAI general knowledge fallback")
+                print("[QAAgent] Using enhanced general knowledge fallback for streaming")
             else:
                 # For non-Resort World Sentosa queries, refuse to answer
                 prompt = (
@@ -170,7 +222,7 @@ class QAAgent:
             model=self.model,
             messages=[{"role":"system","content":prompt}],
             temperature=0.2,
-            max_tokens=500,
+            max_tokens=800,
             stream=True
         )
         # Iterate over streamed chunks and yield content pieces
@@ -314,7 +366,7 @@ You are an expert assistant judging a RAG system. Given several candidate answer
         return answer, cand_idx
 
 class RAGOrchestrator:
-    """Fully agentic and parallel RAG orchestrator."""
+    """Fully agentic and parallel RAG orchestrator with document summarization."""
     def __init__(self, n_candidates:int=3, k:int=5):
         print("[RAGOrchestrator] Initializing agents")
         self.loader = PDFLoaderAgent()
@@ -325,13 +377,108 @@ class RAGOrchestrator:
         self.ranker = RankingAgent()
         self.n_candidates = n_candidates
         self.k = k
+        self.document_summary = ""
+        self.document_metadata = {}
 
     def ingest(self, pdf_path:str):
         print(f"[RAGOrchestrator] Ingesting PDF: {pdf_path}")
         self.text_chunks = self.loader.load_and_split(pdf_path)
         self.embedder.add_to_index(self.text_chunks)
         self.retriever = RetrievalAgent(self.embedder.index)
+        
+        # Generate document summary for better understanding
+        self._generate_document_summary()
+        
         print(f"[RAGOrchestrator] Ingestion complete with {len(self.text_chunks)} chunks")
+        print(f"[RAGOrchestrator] Document summary generated: {len(self.document_summary)} characters")
+    
+    def _generate_document_summary(self):
+        """Generate a comprehensive summary of the entire document."""
+        if not self.text_chunks:
+            return
+        
+        print("[RAGOrchestrator] Generating document summary...")
+        
+        # Take a representative sample of chunks for summarization
+        # Use first few chunks, middle chunks, and last few chunks
+        total_chunks = len(self.text_chunks)
+        sample_size = min(10, total_chunks)  # Limit to avoid token limits
+        
+        if total_chunks <= sample_size:
+            sample_chunks = self.text_chunks
+        else:
+            # Strategic sampling: beginning, middle, end
+            start_chunks = self.text_chunks[:3]
+            middle_start = total_chunks // 2 - 2
+            middle_chunks = self.text_chunks[middle_start:middle_start + 4]
+            end_chunks = self.text_chunks[-3:]
+            sample_chunks = start_chunks + middle_chunks + end_chunks
+        
+        # Combine sample chunks
+        sample_text = '\n\n'.join(sample_chunks)
+        
+        # Generate summary using OpenAI
+        summary_prompt = f"""
+Please provide a comprehensive summary of this document. Focus on:
+1. Main topics and themes
+2. Key facts, figures, and important information
+3. Document structure and organization
+4. Any specific entities, locations, or organizations mentioned
+5. Purpose and context of the document
+
+Document content:
+{sample_text}
+
+Provide a detailed summary that captures the essence and key information of this document:
+"""
+        
+        try:
+            response = openai.chat.completions.create(
+                model=CHAT_MODEL,
+                messages=[{"role": "user", "content": summary_prompt}],
+                max_tokens=800,
+                temperature=0.3
+            )
+            
+            self.document_summary = response.choices[0].message.content.strip()
+            
+            # Extract metadata
+            self._extract_document_metadata()
+            
+        except Exception as e:
+            print(f"[RAGOrchestrator] Error generating summary: {str(e)}")
+            self.document_summary = "Summary generation failed."
+    
+    def _extract_document_metadata(self):
+        """Extract key metadata from the document summary and chunks."""
+        # Simple metadata extraction
+        self.document_metadata = {
+            "total_chunks": len(self.text_chunks),
+            "estimated_pages": len(self.text_chunks) // 3,  # Rough estimate
+            "summary_length": len(self.document_summary),
+            "has_summary": bool(self.document_summary)
+        }
+        
+        # Extract key entities from summary if available
+        if self.document_summary:
+            summary_lower = self.document_summary.lower()
+            
+            # Look for common business/organization indicators
+            if any(term in summary_lower for term in ['company', 'corporation', 'business', 'organization']):
+                self.document_metadata["type"] = "business_document"
+            elif any(term in summary_lower for term in ['resort', 'hotel', 'tourism', 'attraction']):
+                self.document_metadata["type"] = "tourism_document"
+            else:
+                self.document_metadata["type"] = "general_document"
+    
+    def get_document_info(self) -> dict:
+        """Get comprehensive document information including summary."""
+        return {
+            "summary": self.document_summary,
+            "metadata": self.document_metadata,
+            "total_chunks": len(self.text_chunks),
+            "ready_for_queries": self.retriever is not None
+        }
 
     def query(self, question:str) -> str:
         print(f"[RAGOrchestrator] Querying for question: {question}")
