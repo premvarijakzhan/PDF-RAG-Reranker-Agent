@@ -276,31 +276,9 @@ class QAAgent:
 
     def _is_general_query_allowed(self, question: str) -> bool:
         """Check if the question is a Resort World Sentosa-related general query that should be answered with OpenAI knowledge."""
-        question_lower = question.lower()
-        
-        # Resort World Sentosa-related keywords that indicate the query is within our domain
-        rws_keywords = [
-            'resort world sentosa', 'resorts world sentosa', 'rws', 'sentosa', 'universal studios singapore',
-            'uss', 'universal studios', 'adventure cove waterpark', 'sea aquarium', 's.e.a. aquarium',
-            'casino', 'gaming', 'hotel', 'accommodation', 'dining', 'restaurant', 'attraction',
-            'theme park', 'waterpark', 'aquarium', 'marine life', 'dolphin', 'shark', 'manta ray',
-            'roller coaster', 'ride', 'show', 'entertainment', 'shopping', 'retail', 'spa', 'wellness',
-            'convention', 'meeting', 'event', 'wedding', 'celebration', 'festive', 'holiday',
-            'singapore', 'island', 'beach', 'tropical', 'vacation', 'leisure', 'family',
-            'kids', 'children', 'adult', 'senior', 'accessibility', 'wheelchair', 'disability',
-            'ticket', 'price', 'promotion', 'discount', 'package', 'deal', 'offer',
-            'opening hours', 'operating hours', 'schedule', 'timing', 'location', 'direction',
-            'transport', 'transportation', 'mrt', 'bus', 'taxi', 'car', 'parking',
-            'weather', 'climate', 'season', 'monsoon', 'rain', 'sunny', 'temperature'
-        ]
-        
-        # Check if question contains Resort World Sentosa-related keywords
-        for keyword in rws_keywords:
-            if keyword in question_lower:
-                return True
-        
-        # Refuse non-Resort World Sentosa queries
-        return False
+        # Allow all questions - let the context relevance check handle filtering
+        # This ensures we can answer anything related to RWS based on the ingested document
+        return True
 
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
         """Generate answers to the question in parallel for multiple context sets."""
