@@ -140,7 +140,7 @@ class QAAgent:
                 # For non-Resort World Sentosa queries, refuse to answer
                 prompt = (
                     "I can only answer questions related to the ingested document content or Resort World Sentosa-related queries. "
-                    "For non-Resort World Sentosa topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    "For non-Resort World Sentosa topics, coding, technical programming questions, please use a specialized tool or service.\n\n"
                     f"Your question: {question}\n"
                     "Please ask questions about the document content or Resort World Sentosa-related topics instead."
                 )
