@@ -5,16 +5,13 @@ import tiktoken
 import openai
 from dotenv import load_dotenv
 from typing import List, Tuple
-from typing import Generator
 from PyPDF2 import PdfReader
 
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 EMBED_MODEL = "text-embedding-ada-002"
-CHAT_MODEL = "gpt-4o-mini"
-
-#CHAT_MODEL = "gpt-3.5-turbo"
+CHAT_MODEL = "gpt-3.5-turbo"
 ENC = tiktoken.get_encoding("cl100k_base")
 
 def num_tokens(text:str) -> int:
@@ -89,196 +86,21 @@ class QAAgent:
     def answer(self, question:str, context:List[str]) -> str:
         print(f"[QAAgent] Answering question with model {self.model}")
         context_str = '---\n'.join(context)
-        
-        # Check if context is meaningful/relevant
-        if self._is_context_relevant(question, context_str):
-            # Enhanced RAG context prompt with better instructions
-            prompt = (
-                "You are an expert assistant specializing in Resort World Sentosa information. "
-                "Use the provided context to answer the question accurately and comprehensively.\n\n"
-                
-                "FORMATTING INSTRUCTIONS:\n"
-                "- Output ONLY plain text with custom highlighting tags\n"
-                "- Do NOT use markdown formatting like **bold** or *italic*\n"
-                "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
-                "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
-                "- Structure your answer clearly with proper paragraphs\n"
-                "- Be specific and cite relevant details from the context\n\n"
-                
-                "ANSWER GUIDELINES:\n"
-                "- Provide complete, accurate information based on the context\n"
-                "- Include specific details, numbers, and facts when available\n"
-                "- If the context contains multiple relevant pieces of information, organize them logically\n"
-                "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
-                "- Be helpful and informative while staying factual\n\n"
-                
-                f"Context:\n{context_str}\n\n"
-                f"Question: {question}\n\n"
-                "Answer based on the provided context:"
-            )
-            print("[QAAgent] Using enhanced RAG context for answer")
-        else:
-            # Fallback to general knowledge for related queries only
-            if self._is_general_query_allowed(question):
-                prompt = (
-                    "You are a helpful assistant specializing in Resort World Sentosa information. "
-                    "Answer the following question using your general knowledge about Resort World Sentosa, "
-                    "its attractions, facilities, and services. Focus on providing accurate, helpful information "
-                    "related to Resort World Sentosa and Sentosa Island.\n\n"
-                    
-                    "FORMATTING INSTRUCTIONS:\n"
-                    "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
-                    "- Use <italic>text</> tags for emphasis and descriptions\n"
-                    "- Provide comprehensive and accurate information\n"
-                    "- Structure your answer clearly\n\n"
-                    
-                    f"Question: {question}\n\n"
-                    "Answer using your knowledge of Resort World Sentosa:"
-                )
-                print("[QAAgent] Using enhanced general knowledge fallback")
-            else:
-                # For non-Resort World Sentosa queries, refuse to answer
-                prompt = (
-                    "I can only answer questions related to the ingested document content or Resort World Sentosa-related queries. "
-                    "For non-Resort World Sentosa topics, coding, technical programming questions, please use a specialized tool or service.\n\n"
-                    f"Your question: {question}\n"
-                    "Please ask questions about the document content or Resort World Sentosa-related topics instead."
-                )
-                print("[QAAgent] Refusing to answer non-Resort World Sentosa query")
-        
+        prompt = (
+            "You are an expert assistant. Use the following context to answer the question.\n\n"
+            f"Context:\n{context_str}\n\n"
+            f"Question: {question}\nAnswer:"
+        )
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
             model=self.model,
             messages=[{"role":"system","content":prompt}],
             temperature=0.2,
-            max_tokens=800
+            max_tokens=500
         )
         answer = resp.choices[0].message.content.strip()
         print(f"[QAAgent] Received answer of length {len(answer)}")
         return answer
-
-    def answer_stream(self, question:str, context:List[str]) -> Generator[str, None, None]:
-        """Stream tokens as the model generates the answer for the given context."""
-        print(f"[QAAgent] Streaming answer with model {self.model}")
-        context_str = '---\n'.join(context)
-        
-        # Check if context is meaningful/relevant
-        if self._is_context_relevant(question, context_str):
-            # Enhanced RAG context prompt with better instructions
-            prompt = (
-                "You are an expert assistant specializing in Resort World Sentosa information. "
-                "Use the provided context to answer the question accurately and comprehensively.\n\n"
-                
-                "FORMATTING INSTRUCTIONS:\n"
-                "- Output ONLY plain text with custom highlighting tags\n"
-                "- Do NOT use markdown formatting like **bold** or *italic*\n"
-                "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
-                "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
-                "- Structure your answer clearly with proper paragraphs\n"
-                "- Be specific and cite relevant details from the context\n\n"
-                
-                "ANSWER GUIDELINES:\n"
-                "- Provide complete, accurate information based on the context\n"
-                "- Include specific details, numbers, and facts when available\n"
-                "- If the context contains multiple relevant pieces of information, organize them logically\n"
-                "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
-                "- Be helpful and informative while staying factual\n\n"
-                
-                f"Context:\n{context_str}\n\n"
-                f"Question: {question}\n\n"
-                "Answer based on the provided context:"
-            )
-            print("[QAAgent] Using enhanced RAG context for streaming answer")
-        else:
-            # Fallback to general knowledge for related queries only
-            if self._is_general_query_allowed(question):
-                prompt = (
-                    "You are a helpful assistant specializing in Resort World Sentosa information. "
-                    "Answer the following question using your general knowledge about Resort World Sentosa, "
-                    "its attractions, facilities, and services. Focus on providing accurate, helpful information "
-                    "related to Resort World Sentosa and Sentosa Island.\n\n"
-                    
-                    "FORMATTING INSTRUCTIONS:\n"
-                    "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
-                    "- Use <italic>text</> tags for emphasis and descriptions\n"
-                    "- Provide comprehensive and accurate information\n"
-                    "- Structure your answer clearly\n\n"
-                    
-                    f"Question: {question}\n\n"
-                    "Answer using your knowledge of Resort World Sentosa:"
-                )
-                print("[QAAgent] Using enhanced general knowledge fallback for streaming")
-            else:
-                # For non-Resort World Sentosa queries, refuse to answer
-                prompt = (
-                    "I can only answer questions related to the ingested document content or Resort World Sentosa-related queries. "
-                    "For non-Resort World Sentosa topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
-                    f"Your question: {question}\n"
-                    "Please ask questions about the document content or Resort World Sentosa-related topics instead."
-                )
-                print("[QAAgent] Refusing to answer non-Resort World Sentosa query")
-        
-        stream = openai.chat.completions.create(
-            model=self.model,
-            messages=[{"role":"system","content":prompt}],
-            temperature=0.2,
-            max_tokens=800,
-            stream=True
-        )
-        # Iterate over streamed chunks and yield content pieces
-        for chunk in stream:
-            try:
-                delta = chunk.choices[0].delta
-                if delta and getattr(delta, "content", None):
-                    yield delta.content
-            except Exception:
-                # Safely ignore any malformed chunks
-                continue
-
-    def _is_context_relevant(self, question: str, context: str) -> bool:
-        """Check if the retrieved context is relevant to the question."""
-        # Simple heuristic: if context is too short or generic, it's likely not relevant
-        if len(context.strip()) < 50:
-            return False
-        
-        # Check for common irrelevant phrases
-        irrelevant_phrases = [
-            "no relevant information",
-            "not found in the document",
-            "unable to find",
-            "no information available"
-        ]
-        
-        context_lower = context.lower()
-        for phrase in irrelevant_phrases:
-            if phrase in context_lower:
-                return False
-        
-        # Use a simple keyword overlap check
-        question_words = set(question.lower().split())
-        context_words = set(context.lower().split())
-        
-        # Remove common stop words
-        stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these', 'those'}
-        
-        question_words = question_words - stop_words
-        context_words = context_words - stop_words
-        
-        # Calculate overlap ratio
-        if len(question_words) == 0:
-            return True  # Default to using context if no meaningful words in question
-        
-        overlap = len(question_words.intersection(context_words))
-        overlap_ratio = overlap / len(question_words)
-        
-        # If less than 20% overlap, consider context not relevant
-        return overlap_ratio >= 0.2
-
-    def _is_general_query_allowed(self, question: str) -> bool:
-        """Check if the question is a Resort World Sentosa-related general query that should be answered with OpenAI knowledge."""
-        # Allow all questions - let the context relevance check handle filtering
-        # This ensures we can answer anything related to RWS based on the ingested document
-        return True
 
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
         """Generate answers to the question in parallel for multiple context sets."""
@@ -310,32 +132,7 @@ class RankingAgent:
             print(f"Candidate #{idx} Answer: {ans}\n----------------------")
 
         ranking_prompt = f"""
-You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.
-
-EVALUATION CRITERIA:
-1. **Context Relevance**: How well does the retrieval context match the question?
-2. **Answer Accuracy**: How accurate and factual is the answer based on the provided context?
-3. **Completeness**: Does the answer fully address all aspects of the question?
-4. **Specificity**: Does the answer provide specific details, numbers, names, or facts?
-5. **Context Support**: Is the answer well-supported by the retrieved context chunks?
-6. **Clarity**: Is the answer clear, well-structured, and easy to understand?
-
-SELECTION GUIDELINES:
-- Prioritize answers that are directly supported by relevant context
-- Favor specific, detailed answers over vague or general responses  
-- Choose answers that fully address the question rather than partial responses
-- Consider the quality and relevance of the retrieval context
-- Focus on Resort World Sentosa and Genting Singapore related information when applicable
-
-Output exactly this format:
-Candidate #N
-Reason: <reason>
-
-Best Answer:
-<full text>
-
-Question: {question}
-"""
+You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.\n\nOutput exactly this format:\nCandidate #N\nReason: <reason>\n\nBest Answer:\n<full text>\n\nQuestion: {question}\n"""
         summary = ""
         for idx, (ctx, ans) in enumerate(zip(candidate_contexts, candidate_answers), 1):
             ctx_part = "\n".join(ctx)
@@ -386,9 +183,8 @@ class RAGOrchestrator:
         self.text_chunks = self.loader.load_and_split(pdf_path)
         self.embedder.add_to_index(self.text_chunks)
         self.retriever = RetrievalAgent(self.embedder.index)
-        
         print(f"[RAGOrchestrator] Ingestion complete with {len(self.text_chunks)} chunks")
-    
+
     def query(self, question:str) -> str:
         print(f"[RAGOrchestrator] Querying for question: {question}")
         # Step 1: Retrieval
@@ -399,16 +195,3 @@ class RAGOrchestrator:
         final_answer, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
         print(f"[RAGOrchestrator] Final answer selected from candidate #{chosen_idx+1}.")
         return final_answer
-
-    def query_stream(self, question:str) -> Generator[str, None, None]:
-        """Run retrieval + ranking, then stream the final answer tokens."""
-        print(f"[RAGOrchestrator] Streaming query for question: {question}")
-        # Step 1: Retrieval
-        candidate_contexts = self.retriever.retrieve_candidates(question, self.text_chunks, n_candidates=self.n_candidates, k=self.k)
-        # Step 2: QA in parallel (non-stream) to allow ranking
-        candidate_answers = self.qa.answer_parallel(question, candidate_contexts)
-        # Step 3: Ranking to pick best context
-        _, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
-        print(f"[RAGOrchestrator] Streaming final answer from candidate #{chosen_idx+1}.")
-        # Step 4: Stream the final answer generation using the chosen context
-        yield from self.qa.answer_stream(question, candidate_contexts[chosen_idx])
