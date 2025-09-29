@@ -103,6 +103,52 @@ class QAAgent:
         print(f"[QAAgent] Received answer of length {len(answer)}")
         return answer
 
+    def answer_stream(self, question:str, context:List[str]) -> Generator[str, None, None]:
+        """Stream tokens as the model generates the answer for the given context."""
+        print(f"[QAAgent] Streaming answer with model {self.model}")
+        context_str = '---\n'.join(context)
+        
+        prompt = (
+            "You are an expert assistant specializing in Resort World Sentosa information. "
+            "Use the provided context to answer the question accurately and comprehensively.\n\n"
+            
+            "FORMATTING INSTRUCTIONS:\n"
+            "- Output ONLY plain text with custom highlighting tags\n"
+            "- Do NOT use markdown formatting like **bold** or *italic*\n"
+            "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+            "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
+            "- Structure your answer clearly with proper paragraphs\n"
+            "- Be specific and cite relevant details from the context\n\n"
+            
+            "ANSWER GUIDELINES:\n"
+            "- Provide complete, accurate information based on the context\n"
+            "- Include specific details, numbers, and facts when available\n"
+            "- If the context contains multiple relevant pieces of information, organize them logically\n"
+            "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
+            "- Be helpful and informative while staying factual\n\n"
+            
+            f"Context:\n{context_str}\n\n"
+            f"Question: {question}\n\n"
+            "Answer based on the provided context:"
+        )
+        
+        stream = openai.chat.completions.create(
+            model=self.model,
+            messages=[{"role":"system","content":prompt}],
+            temperature=0.2,
+            max_tokens=800,
+            stream=True
+        )
+        # Iterate over streamed chunks and yield content pieces
+        for chunk in stream:
+            try:
+                delta = chunk.choices[0].delta
+                if delta and getattr(delta, "content", None):
+                    yield delta.content
+            except Exception:
+                # Safely ignore any malformed chunks
+                continue
+
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
         """Generate answers to the question in parallel for multiple context sets."""
         print(f"[QAAgent] Generating answers in parallel for {len(candidate_contexts)} candidates.")
