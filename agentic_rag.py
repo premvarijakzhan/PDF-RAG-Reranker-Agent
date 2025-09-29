@@ -369,7 +369,7 @@ Question: {question}
         return answer, cand_idx
 
 class RAGOrchestrator:
-    """Fully agentic and parallel RAG orchestrator with document summarization."""
+    """Fully agentic and parallel RAG orchestrator."""
     def __init__(self, n_candidates:int=3, k:int=5):
         print("[RAGOrchestrator] Initializing agents")
         self.loader = PDFLoaderAgent()
@@ -380,8 +380,6 @@ class RAGOrchestrator:
         self.ranker = RankingAgent()
         self.n_candidates = n_candidates
         self.k = k
-        self.document_summary = ""
-        self.document_metadata = {}
 
     def ingest(self, pdf_path:str):
         print(f"[RAGOrchestrator] Ingesting PDF: {pdf_path}")
@@ -389,100 +387,8 @@ class RAGOrchestrator:
         self.embedder.add_to_index(self.text_chunks)
         self.retriever = RetrievalAgent(self.embedder.index)
         
-        # Generate document summary for better understanding
-        self._generate_document_summary()
-        
         print(f"[RAGOrchestrator] Ingestion complete with {len(self.text_chunks)} chunks")
-        print(f"[RAGOrchestrator] Document summary generated: {len(self.document_summary)} characters")
     
-    def _generate_document_summary(self):
-        """Generate a comprehensive summary of the entire document."""
-        if not self.text_chunks:
-            return
-        
-        print("[RAGOrchestrator] Generating document summary...")
-        
-        # Take a representative sample of chunks for summarization
-        # Use first few chunks, middle chunks, and last few chunks
-        total_chunks = len(self.text_chunks)
-        sample_size = min(10, total_chunks)  # Limit to avoid token limits
-        
-        if total_chunks <= sample_size:
-            sample_chunks = self.text_chunks
-        else:
-            # Strategic sampling: beginning, middle, end
-            start_chunks = self.text_chunks[:3]
-            middle_start = total_chunks // 2 - 2
-            middle_chunks = self.text_chunks[middle_start:middle_start + 4]
-            end_chunks = self.text_chunks[-3:]
-            sample_chunks = start_chunks + middle_chunks + end_chunks
-        
-        # Combine sample chunks
-        sample_text = '\n\n'.join(sample_chunks)
-        
-        # Generate summary using OpenAI
-        summary_prompt = f"""
-Please provide a comprehensive summary of this document. Focus on:
-1. Main topics and themes
-2. Key facts, figures, and important information
-3. Document structure and organization
-4. Any specific entities, locations, or organizations mentioned
-5. Purpose and context of the document
-
-Document content:
-{sample_text}
-
-Provide a detailed summary that captures the essence and key information of this document:
-"""
-        
-        try:
-            response = openai.chat.completions.create(
-                model=CHAT_MODEL,
-                messages=[{"role": "user", "content": summary_prompt}],
-                max_tokens=800,
-                temperature=0.3
-            )
-            
-            self.document_summary = response.choices[0].message.content.strip()
-            
-            # Extract metadata
-            self._extract_document_metadata()
-            
-        except Exception as e:
-            print(f"[RAGOrchestrator] Error generating summary: {str(e)}")
-            self.document_summary = "Summary generation failed."
-    
-    def _extract_document_metadata(self):
-        """Extract key metadata from the document summary and chunks."""
-        # Simple metadata extraction
-        self.document_metadata = {
-            "total_chunks": len(self.text_chunks),
-            "estimated_pages": len(self.text_chunks) // 3,  # Rough estimate
-            "summary_length": len(self.document_summary),
-            "has_summary": bool(self.document_summary)
-        }
-        
-        # Extract key entities from summary if available
-        if self.document_summary:
-            summary_lower = self.document_summary.lower()
-            
-            # Look for common business/organization indicators
-            if any(term in summary_lower for term in ['company', 'corporation', 'business', 'organization']):
-                self.document_metadata["type"] = "business_document"
-            elif any(term in summary_lower for term in ['resort', 'hotel', 'tourism', 'attraction']):
-                self.document_metadata["type"] = "tourism_document"
-            else:
-                self.document_metadata["type"] = "general_document"
-    
-    def get_document_info(self) -> dict:
-        """Get comprehensive document information including summary."""
-        return {
-            "summary": self.document_summary,
-            "metadata": self.document_metadata,
-            "total_chunks": len(self.text_chunks),
-            "ready_for_queries": self.retriever is not None
-        }
-
     def query(self, question:str) -> str:
         print(f"[RAGOrchestrator] Querying for question: {question}")
         # Step 1: Retrieval
