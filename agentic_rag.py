@@ -95,7 +95,7 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
+                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -104,21 +104,21 @@ class QAAgent:
             # Fallback to general knowledge for related queries only
             if self._is_general_query_allowed(question):
                 prompt = (
-                    "You are a helpful assistant. Answer the following question using your general knowledge. "
-                    "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
+                    "You are a helpful assistant specializing in Resort World Sentosa information. Answer the following question using your general knowledge about Resort World Sentosa, its attractions, facilities, and services. "
+                    "Focus on providing accurate, helpful information related to Resort World Sentosa and Sentosa Island.\n\n"
+                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
             else:
-                # For non-GIS queries, refuse to answer
+                # For non-Resort World Sentosa queries, refuse to answer
                 prompt = (
-                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
-                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    "I can only answer questions related to the ingested document content or Resort World Sentosa-related queries. "
+                    "For non-Resort World Sentosa topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
                     f"Your question: {question}\n"
-                    "Please ask questions about the document content or GIS-related topics instead."
+                    "Please ask questions about the document content or Resort World Sentosa-related topics instead."
                 )
-                print("[QAAgent] Refusing to answer non-GIS query")
+                print("[QAAgent] Refusing to answer non-Resort World Sentosa query")
         
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
@@ -141,7 +141,7 @@ class QAAgent:
             # Use RAG context
             prompt = (
                 "You are an expert assistant. Use the following context to answer the question.\n\n"
-                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
+                "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
                 f"Context:\n{context_str}\n\n"
                 f"Question: {question}\nAnswer:"
             )
@@ -150,21 +150,21 @@ class QAAgent:
             # Fallback to general knowledge for related queries only
             if self._is_general_query_allowed(question):
                 prompt = (
-                    "You are a helpful assistant. Answer the following question using your general knowledge. "
-                    "Focus on providing accurate, helpful information related to the topic.\n\n"
-                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></> and <italic></> tags to highlight important information, facts, and numbers.\n\n"
+                    "You are a helpful assistant specializing in Resort World Sentosa information. Answer the following question using your general knowledge about Resort World Sentosa, its attractions, facilities, and services. "
+                    "Focus on providing accurate, helpful information related to Resort World Sentosa and Sentosa Island.\n\n"
+                    "Output ONLY plain text with custom highlighting tags. Do NOT use any markdown formatting like **bold**, *italic*. Use <bold></bold> and <italic></italic> tags to highlight important information, facts, and numbers.\n\n"
                     f"Question: {question}\nAnswer:"
                 )
                 print("[QAAgent] Using OpenAI general knowledge fallback")
             else:
-                # For non-GIS queries, refuse to answer
+                # For non-Resort World Sentosa queries, refuse to answer
                 prompt = (
-                    "I can only answer questions related to the ingested document content or general GIS-related queries. "
-                    "For non-GIS topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
+                    "I can only answer questions related to the ingested document content or Resort World Sentosa-related queries. "
+                    "For non-Resort World Sentosa topics, coding, technical programming questions, or unrelated subjects, please use a specialized tool or service.\n\n"
                     f"Your question: {question}\n"
-                    "Please ask questions about the document content or GIS-related topics instead."
+                    "Please ask questions about the document content or Resort World Sentosa-related topics instead."
                 )
-                print("[QAAgent] Refusing to answer non-GIS query")
+                print("[QAAgent] Refusing to answer non-Resort World Sentosa query")
         
         stream = openai.chat.completions.create(
             model=self.model,
@@ -223,28 +223,31 @@ class QAAgent:
         return overlap_ratio >= 0.2
 
     def _is_general_query_allowed(self, question: str) -> bool:
-        """Check if the question is a GIS-related general query that should be answered with OpenAI knowledge."""
+        """Check if the question is a Resort World Sentosa-related general query that should be answered with OpenAI knowledge."""
         question_lower = question.lower()
         
-        # GIS-related keywords that indicate the query is within our domain
-        gis_keywords = [
-            'gis', 'geographic', 'geospatial', 'spatial', 'mapping', 'map', 'cartography',
-            'coordinates', 'latitude', 'longitude', 'projection', 'datum', 'coordinate system',
-            'remote sensing', 'satellite', 'imagery', 'raster', 'vector', 'shapefile',
-            'geodatabase', 'topology', 'buffer', 'overlay', 'spatial analysis',
-            'geocoding', 'geoprocessing', 'spatial query', 'spatial join',
-            'arcgis', 'qgis', 'postgis', 'ogr', 'gdal', 'geojson', 'kml', 'wms', 'wfs',
-            'location', 'geography', 'terrain', 'elevation', 'dem', 'contour',
-            'navigation', 'routing', 'distance', 'area', 'perimeter', 'polygon',
-            'point', 'line', 'feature', 'attribute', 'field', 'layer'
+        # Resort World Sentosa-related keywords that indicate the query is within our domain
+        rws_keywords = [
+            'resort world sentosa', 'resorts world sentosa', 'rws', 'sentosa', 'universal studios singapore',
+            'uss', 'universal studios', 'adventure cove waterpark', 'sea aquarium', 's.e.a. aquarium',
+            'casino', 'gaming', 'hotel', 'accommodation', 'dining', 'restaurant', 'attraction',
+            'theme park', 'waterpark', 'aquarium', 'marine life', 'dolphin', 'shark', 'manta ray',
+            'roller coaster', 'ride', 'show', 'entertainment', 'shopping', 'retail', 'spa', 'wellness',
+            'convention', 'meeting', 'event', 'wedding', 'celebration', 'festive', 'holiday',
+            'singapore', 'island', 'beach', 'tropical', 'vacation', 'leisure', 'family',
+            'kids', 'children', 'adult', 'senior', 'accessibility', 'wheelchair', 'disability',
+            'ticket', 'price', 'promotion', 'discount', 'package', 'deal', 'offer',
+            'opening hours', 'operating hours', 'schedule', 'timing', 'location', 'direction',
+            'transport', 'transportation', 'mrt', 'bus', 'taxi', 'car', 'parking',
+            'weather', 'climate', 'season', 'monsoon', 'rain', 'sunny', 'temperature'
         ]
         
-        # Check if question contains GIS-related keywords
-        for keyword in gis_keywords:
+        # Check if question contains Resort World Sentosa-related keywords
+        for keyword in rws_keywords:
             if keyword in question_lower:
                 return True
         
-        # Refuse non-GIS queries
+        # Refuse non-Resort World Sentosa queries
         return False
 
     def answer_parallel(self, question:str, candidate_contexts:List[List[str]]) -> List[str]:
