@@ -5,6 +5,7 @@ import tiktoken
 import openai
 from dotenv import load_dotenv
 from typing import List, Tuple
+from typing import Generator
 from PyPDF2 import PdfReader
 
 load_dotenv()
@@ -204,3 +205,16 @@ class RAGOrchestrator:
         final_answer, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
         print(f"[RAGOrchestrator] Final answer selected from candidate #{chosen_idx+1}.")
         return final_answer
+
+    def query_stream(self, question:str) -> Generator[str, None, None]:
+        """Run retrieval + ranking, then stream the final answer tokens."""
+        print(f"[RAGOrchestrator] Streaming query for question: {question}")
+        # Step 1: Retrieval
+        candidate_contexts = self.retriever.retrieve_candidates(question, self.text_chunks, n_candidates=self.n_candidates, k=self.k)
+        # Step 2: QA in parallel (non-stream) to allow ranking
+        candidate_answers = self.qa.answer_parallel(question, candidate_contexts)
+        # Step 3: Ranking to pick best context
+        _, chosen_idx = self.ranker.rank(question, candidate_answers, candidate_contexts)
+        print(f"[RAGOrchestrator] Streaming final answer from candidate #{chosen_idx+1}.")
+        # Step 4: Stream the final answer generation using the chosen context
+        yield from self.qa.answer_stream(question, candidate_contexts[chosen_idx])
