@@ -310,7 +310,32 @@ class RankingAgent:
             print(f"Candidate #{idx} Answer: {ans}\n----------------------")
 
         ranking_prompt = f"""
-You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.\n\nOutput exactly this format:\nCandidate #N\nReason: <reason>\n\nBest Answer:\n<full text>\n\nQuestion: {question}\n"""
+You are an expert assistant judging a RAG system. Given several candidate answers (each with their retrieval context) to the same question, first select the single most accurate/supportable candidate, then explain briefly why you chose it.
+
+EVALUATION CRITERIA:
+1. **Context Relevance**: How well does the retrieval context match the question?
+2. **Answer Accuracy**: How accurate and factual is the answer based on the provided context?
+3. **Completeness**: Does the answer fully address all aspects of the question?
+4. **Specificity**: Does the answer provide specific details, numbers, names, or facts?
+5. **Context Support**: Is the answer well-supported by the retrieved context chunks?
+6. **Clarity**: Is the answer clear, well-structured, and easy to understand?
+
+SELECTION GUIDELINES:
+- Prioritize answers that are directly supported by relevant context
+- Favor specific, detailed answers over vague or general responses  
+- Choose answers that fully address the question rather than partial responses
+- Consider the quality and relevance of the retrieval context
+- Focus on Resort World Sentosa and Genting Singapore related information when applicable
+
+Output exactly this format:
+Candidate #N
+Reason: <reason>
+
+Best Answer:
+<full text>
+
+Question: {question}
+"""
         summary = ""
         for idx, (ctx, ans) in enumerate(zip(candidate_contexts, candidate_answers), 1):
             ctx_part = "\n".join(ctx)
