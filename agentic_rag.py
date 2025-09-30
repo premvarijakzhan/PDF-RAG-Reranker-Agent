@@ -88,9 +88,27 @@ class QAAgent:
         print(f"[QAAgent] Answering question with model {self.model}")
         context_str = '---\n'.join(context)
         prompt = (
-            "You are an expert assistant. Use the following context to answer the question.\n\n"
+            "You are an expert assistant specializing in Resort World Sentosa information. "
+            "Use the provided context to answer the question accurately and comprehensively.\n\n"
+            
+            "FORMATTING INSTRUCTIONS:\n"
+            "- Output ONLY plain text with custom highlighting tags\n"
+            "- Do NOT use markdown formatting like **bold** or *italic*\n"
+            "- Use <bold>text</> tags for important facts, numbers, names, and key information\n"
+            "- Use <italic>text</> tags for emphasis, descriptions, and explanatory details\n"
+            "- Structure your answer clearly with proper paragraphs\n"
+            "- Be specific and cite relevant details from the context\n\n"
+            
+            "ANSWER GUIDELINES:\n"
+            "- Provide complete, accurate information based on the context\n"
+            "- Include specific details, numbers, and facts when available\n"
+            "- If the context contains multiple relevant pieces of information, organize them logically\n"
+            "- Focus on Resort World Sentosa attractions, facilities, services, and related information\n"
+            "- Be helpful and informative while staying factual\n\n"
+            
             f"Context:\n{context_str}\n\n"
-            f"Question: {question}\nAnswer:"
+            f"Question: {question}\n\n"
+            "Answer based on the provided context:"
         )
         print(f"[QAAgent] Sending prompt to model. Prompt length: {len(prompt)} characters")
         resp = openai.chat.completions.create(
